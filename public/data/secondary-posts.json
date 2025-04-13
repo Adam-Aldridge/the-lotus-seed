@@ -1,0 +1,12 @@
+{
+  "posts": [
+    {
+      "id": 1,
+      "title": "Example post",
+      "description": "this is the description",
+      "image": "images/default.jpeg",
+      "pdf": "pdfs/default.pdf"
+    }
+  ],
+  "about": "<p> This page is for when you just want to get something out but don't feel it's worthy of the main page. Perhaps you've just bashed out 1000 words on the bus in a fit of excitement but don't feel like editing it into something presentable.\n<br>\n<br>\nWrite whatever you want 😛</p>"
+}
