@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Example post",
       "description": "this is the description",
-      "image": "images/default.jpeg",
+      "image": "content-efs/images/default.jpeg",
       "pdf": "pdfs/default.pdf"
     }
   ],

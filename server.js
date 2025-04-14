@@ -13,8 +13,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Ensure the upload directories exist
-const imagesDir = path.join(__dirname, 'public', 'images');
-const pdfsDir = path.join(__dirname, 'public', 'pdfs');
+const imagesDir = path.join(__dirname, 'public', 'content-efs/images');
+const pdfsDir = path.join(__dirname, 'public', 'content-efs/pdfs');
 const dataDir = path.join(__dirname, 'public', 'data');
 const viewsDir = path.join(__dirname, 'views');
 const tenantsDir = path.join(__dirname, 'public', 'data', 'tenants');
@@ -655,21 +655,21 @@ app.post('/api/posts/:pageType', upload.fields([
     }, 0);
     
     // Set default image and PDF paths
-    let imagePath = 'images/default.jpeg';
-    let pdfPath = 'pdfs/default.pdf';
+    let imagePath = 'content-efs/images/default.jpeg';
+    let pdfPath = 'content-efs/pdfs/default.pdf';
     
     // Update paths if files were uploaded
     if (req.files) {
       if (req.files.image && req.files.image.length > 0) {
         // Get the relative path for the image
         const filename = path.basename(req.files.image[0].path);
-        imagePath = `images/${filename}`;
+        imagePath = `content-efs/images/${filename}`;
       }
       
       if (req.files.pdf && req.files.pdf.length > 0) {
         // Get the relative path for the PDF
         const filename = path.basename(req.files.pdf[0].path);
-        pdfPath = `pdfs/${filename}`;
+        pdfPath = `content-efs/pdfs/${filename}`;
       }
     }
     
@@ -773,21 +773,21 @@ app.post('/api/:tenantId/posts/:pageType', upload.fields([
     }, 0);
     
     // Set default image and PDF paths
-    let imagePath = 'images/default.jpeg';
-    let pdfPath = 'pdfs/default.pdf';
+    let imagePath = 'content-efs/images/default.jpeg';
+    let pdfPath = 'content-efs/pdfs/default.pdf';
     
     // Update paths if files were uploaded
     if (req.files) {
       if (req.files.image && req.files.image.length > 0) {
         // Get the relative path for the image (with tenant subfolder)
         const filename = path.basename(req.files.image[0].path);
-        imagePath = `images/${tenantId}/${filename}`;
+        imagePath = `content-efs/images/${tenantId}/${filename}`;
       }
       
       if (req.files.pdf && req.files.pdf.length > 0) {
         // Get the relative path for the PDF (with tenant subfolder)
         const filename = path.basename(req.files.pdf[0].path);
-        pdfPath = `pdfs/${tenantId}/${filename}`;
+        pdfPath = `content-efs/pdfs/${tenantId}/${filename}`;
       }
     }
     
@@ -862,7 +862,7 @@ app.delete('/api/posts/:pageType/:id', (req, res) => {
     // If we have a post and it has custom files, delete them
     if (postToDelete) {
       // Delete image file if it's not the default
-      if (postToDelete.image && postToDelete.image !== 'images/default.jpeg') {
+      if (postToDelete.image && postToDelete.image !== 'content-efs/images/default.jpeg') {
         const imagePath = path.join(__dirname, 'public', postToDelete.image);
         if (fs.existsSync(imagePath)) {
           fs.unlinkSync(imagePath);
@@ -871,7 +871,7 @@ app.delete('/api/posts/:pageType/:id', (req, res) => {
       }
       
       // Delete PDF file if it's not the default
-      if (postToDelete.pdf && postToDelete.pdf !== 'pdfs/default.pdf') {
+      if (postToDelete.pdf && postToDelete.pdf !== 'content-efs/pdfs/default.pdf') {
         const pdfPath = path.join(__dirname, 'public', postToDelete.pdf);
         if (fs.existsSync(pdfPath)) {
           fs.unlinkSync(pdfPath);
@@ -949,7 +949,7 @@ app.delete('/api/:tenantId/posts/:pageType/:id', (req, res) => {
     // If we have a post and it has custom files, delete them
     if (postToDelete) {
       // Delete image file if it's not the default
-      if (postToDelete.image && postToDelete.image !== 'images/default.jpeg') {
+      if (postToDelete.image && postToDelete.image !== 'content-efs/images/default.jpeg') {
         const imagePath = path.join(__dirname, 'public', postToDelete.image);
         if (fs.existsSync(imagePath)) {
           fs.unlinkSync(imagePath);
@@ -958,7 +958,7 @@ app.delete('/api/:tenantId/posts/:pageType/:id', (req, res) => {
       }
       
       // Delete PDF file if it's not the default
-      if (postToDelete.pdf && postToDelete.pdf !== 'pdfs/default.pdf') {
+      if (postToDelete.pdf && postToDelete.pdf !== 'content-efs/pdfs/default.pdf') {
         const pdfPath = path.join(__dirname, 'public', postToDelete.pdf);
         if (fs.existsSync(pdfPath)) {
           fs.unlinkSync(pdfPath);
