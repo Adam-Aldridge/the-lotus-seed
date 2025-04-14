@@ -448,12 +448,13 @@ body {
         padding: 1rem;
         text-align: center;
         height: auto; /* Override fixed height on mobile */
+        background: linear-gradient(0deg, #0d321f 45%, #d6c68d 95%);
     }
     
     .banner-content {
         text-align: center;
         padding-left: 0;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.0rem;
         order: 2; /* Move text below logo on mobile */
     }
     
@@ -469,13 +470,14 @@ body {
     .logo-container {
         padding-right: 0;
         order: 1; /* Show logo first on mobile */
-        margin-bottom: 0.5rem;
+        margin-bottom: -0.5rem;
+        margin-top: -0.5rem;
     }
     
     .logo {
-        width: 100px;
+        width: 110px;
         height: auto; /* Adjust height automatically on mobile */
-        max-height: 100px;
+        max-height: 540px;
     }
     
     /* Improved navigation for mobile */
@@ -494,13 +496,15 @@ body {
     }
     
     .add-post-btn {
-        position: relative;
+        position: relative; /* Keep as relative */
         margin: 0.5rem;
         bottom: auto;
         right: auto;
-        align-self: stretch;
-        width: 100%;
+        align-self: flex-end; /* Align to the right side */
+        width: auto; /* Change from 100% to auto width */
         justify-content: center;
+        margin-left: auto; /* This pushes it to the right */
+        margin-right: 1rem; /* Add some margin on the right */
     }
     
     /* Better spacing for content area on mobile */
@@ -557,6 +561,10 @@ body {
     .modal-content {
         width: 95%;
         padding: 1rem;
+    }
+
+    .add-post-btn {
+        width: 30%; /* Change from 100% to auto width */ 
     }
 }
 
