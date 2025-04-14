@@ -215,36 +215,37 @@ body {
     border: 1px solid #ddd; /* Subtle border */
 }
 
-/* Banner Layout Styles - Updated for The Lotus Seed */
+/* Banner Layout Styles - Updated for responsiveness */
 .banner {
     background: linear-gradient(110deg, #0d321f 60%, #d6c68d 90%);
     color: white;
-    padding: 1rem 2rem; /* Reduced vertical padding to make banner shorter */
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 150px;
+    height: 150px; /* Fixed height for desktop view as requested */
 }
-
 
 .banner-content {
     text-align: left;
-    padding-left: 30px; /* Added 10px left padding to the title section */
+    padding-left: 30px;
 }
 
 .banner h1 {
     font-family: 'Georgia', serif;
     /*font-family: 'Lucida Grande', serif;*/
-    font-size: 3.8rem;
+    font-size: calc(2rem + 1.5vw); /* Responsive font size */
     margin: 0;
     color: #fefcfe;
+    line-height: 1.2; /* Improve line height for better readability */
 }
+
 .banner p {
-    font-size: 1.2rem; /* Smaller subtitle font size */
-    margin-top: -10px;
+    font-size: 1.2rem;
+    margin-top: 5px; /* Adjusted from negative margin */
     font-style: italic;
-    color: #e3e3cf; /* Slightly lighter color for contrast */
-}/* Added Banner Layout Styles */
+    color: #e3e3cf;
+}
 
 .logo-container {
     display: flex;
@@ -254,13 +255,11 @@ body {
 }
 
 .logo {
-    width: 210px; /* Reduced from 80px to match shorter banner */
-    height: 200px; /* Reduced from 80px to match shorter banner */
+    width: 210px; /* Restored to original size for desktop */
+    height: 200px; /* Restored to original size for desktop */
     border-radius: 4px;
     object-fit: cover;
 }
-
-
 
 .nav {
     background-color: #373724;
@@ -435,9 +434,84 @@ body {
     font-size: 0.9rem;
 }
 
+/* Improved responsive styles */
 @media (max-width: 900px) {
     .blog-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Improved mobile styles */
+@media (max-width: 768px) {
+    .banner {
+        flex-direction: column;
+        padding: 1rem;
+        text-align: center;
+        height: auto; /* Override fixed height on mobile */
+    }
+    
+    .banner-content {
+        text-align: center;
+        padding-left: 0;
+        margin-bottom: 0.5rem;
+        order: 2; /* Move text below logo on mobile */
+    }
+    
+    .banner h1 {
+        font-size: 2.2rem; /* Smaller font on mobile */
+    }
+    
+    .banner p {
+        font-size: 1rem;
+        margin-top: 0.25rem;
+    }
+    
+    .logo-container {
+        padding-right: 0;
+        order: 1; /* Show logo first on mobile */
+        margin-bottom: 0.5rem;
+    }
+    
+    .logo {
+        width: 100px;
+        height: auto; /* Adjust height automatically on mobile */
+        max-height: 100px;
+    }
+    
+    /* Improved navigation for mobile */
+    .nav {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 0;
+        position: relative;
+    }
+    
+    .nav a {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        flex-grow: 1;
+        text-align: center;
+    }
+    
+    .add-post-btn {
+        position: relative;
+        margin: 0.5rem;
+        bottom: auto;
+        right: auto;
+        align-self: stretch;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Better spacing for content area on mobile */
+    .content {
+        padding: 1rem;
+    }
+    
+    /* Adjusted about section for mobile */
+    .about-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
 }
 
@@ -454,23 +528,35 @@ body {
         margin: 10px auto 0;
         min-height: calc(100vh - 10px);
     }
-    
-    /* Responsive banner for small screens */
-    .banner {
+}
+
+/* Extreme small screens adjustments */
+@media (max-width: 480px) {
+    .nav {
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 1.5rem 1rem;
     }
     
-    .banner-content {
-        text-align: center;
-        margin-bottom: 1rem;
+    .nav a {
+        width: 100%;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
-    .logo {
-        width: 60px;
-        height: 60px;
+    .banner h1 {
+        font-size: 1.8rem;
+    }
+    
+    body {
+        padding: 5px;
+    }
+    
+    .container {
+        margin: 5px auto;
+    }
+    
+    /* Adjust modal for very small screens */
+    .modal-content {
+        width: 95%;
+        padding: 1rem;
     }
 }
 
