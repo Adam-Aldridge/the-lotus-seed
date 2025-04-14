@@ -37,6 +37,7 @@
     bottom: 8px;
     right: 8px;
     margin: 0;
+    z-index: 1;
 }
 
 .add-post-btn:hover {
@@ -67,6 +68,8 @@
 
 .page-about-content {
     flex: 1;
+    position: relative;
+    z-index: 2; /* Higher z-index means it appears in front */
 }
 
 .about-page-content {
