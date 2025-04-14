@@ -5,7 +5,7 @@
       "title": "Example post",
       "description": "...",
       "image": "content-efs/images/default.jpeg",
-      "pdf": "pdfs/default.pdf"
+      "pdf": "content-efs/pdfs/default.pdf"
     }
   ],
   "about": "<h3>Welcome to the place where all meditators can share their writings.</h3>\n\n<p><br>Just press the Add Writing button, include a description and upload your piece. You can get the password by asking anyone listed in the About page. \n<br>\nUploads can be of various shapes, sizes and topics. But as a rule, it's always best to write about something which makes you feels inspired! 😁  </p>\n\n"
