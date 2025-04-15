@@ -100,7 +100,7 @@
 }
 
 .modal-content {
-    background-color: white;
+    background-color: #f8f6f6fe;
     padding: 1.5rem;
     border-radius: 8px;
     max-width: 500px;
@@ -109,6 +109,9 @@
     position: relative;
     /* Remove overflow-y from here */
 }
+
+
+
 
 /* Remove the overflow from the form */
 #addPostForm, #editAboutForm {
@@ -282,12 +285,12 @@ body {
 }
 
 .nav a:hover, .nav a.active {
-    background-color: #1a2530;
+    background-color: #494124;
 }
 
 .nav a.active {
     font-weight: bold;
-    border-bottom: 3px solid #3498db;
+    border-bottom: 3px solid #8d8259;
 }
 
 .content {
@@ -617,3 +620,83 @@ input[type="password"] {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
+
+
+
+/* Updated styles for edit and delete buttons */
+.edit-btn {
+    position: absolute;
+    top: 5px;
+    right: 25px; /* Position to the left of delete button */
+    background-color: rgba(74, 103, 127, 0.1); /* Light blue that's visible but subtle */
+    color: rgba(255, 255, 255, 0.7); /* Semi-transparent white text */
+    border: none;
+    border-radius: 5%;
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s;
+    z-index: 20;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(132, 89, 84, 0.1); /* Light red that's visible but subtle */
+    color: rgba(255, 255, 255, 0.7); /* Semi-transparent white text */
+    border: none;
+    border-radius: 5%;
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s;
+    z-index: 20;
+}
+
+.edit-btn:hover {
+    background-color: rgba(33, 150, 243, 0.8); /* Vivid blue on hover */
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: rgba(231, 76, 60, 0.8); /* Vivid red on hover */
+    color: white;
+}
+
+
+
+/* But still let them respond to direct hover */
+.blog-post:hover .edit-btn:hover {
+    background-color: rgba(33, 150, 243, 0.8); /* Vivid blue on hover */
+    color: white;
+}
+
+.blog-post:hover .delete-btn:hover {
+    background-color: rgba(231, 76, 60, 0.8); /* Vivid red on hover */
+    color: white;
+}
+/* Make sure the edit and delete buttons don't overlap 
+.blog-post:hover .edit-btn, .blog-post:hover .delete-btn {
+    background-color: rgba(33, 150, 243, 0.6);
+    color: rgba(250, 250, 250, 0.8);
+}*/
+
+
+
+/* Current file info styling */
+.current-file-info {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+

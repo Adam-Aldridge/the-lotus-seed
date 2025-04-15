@@ -39,19 +39,32 @@ templateFiles.forEach(file => {
   }
 });
 
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath;
     
     // Get tenant ID from the request
-    const tenantId = req.params.tenantId || 'default';
+    const tenantId = req.params.tenantId || ''; 
     
     // Determine which folder to use based on file type
     if (file.fieldname === 'image') {
-      uploadPath = path.join(imagesDir, tenantId);
+      if (tenantId) {
+        // For tenant-specific images
+        uploadPath = path.join(imagesDir, tenantId);
+      } else {
+        // For main site images, store directly in the images folder
+        uploadPath = imagesDir;
+      }
     } else if (file.fieldname === 'pdf') {
-      uploadPath = path.join(pdfsDir, tenantId);
+      if (tenantId) {
+        // For tenant-specific PDFs
+        uploadPath = path.join(pdfsDir, tenantId);
+      } else {
+        // For main site PDFs, store directly in the pdfs folder
+        uploadPath = pdfsDir;
+      }
     } else {
       uploadPath = path.join(__dirname, 'public', 'uploads', tenantId);
     }
@@ -240,22 +253,18 @@ function renderPage(res, pageType, pageTitle, tenantId = 'default') {
         postHTML = postHTML.replace(/\{\{id\}\}/g, post.id);
         postHTML = postHTML.replace(/\{\{title\}\}/g, post.title);
         
-        // Add tenant path to image and PDF paths
+        // Handle image and PDF paths correctly
         let imagePath = post.image;
         let pdfPath = post.pdf;
         
-        // Adjust paths for tenant-specific files
-        if (tenantId !== 'default') {
-          // Keep original path if it's a default asset
-          if (!imagePath.includes('default.jpeg')) {
-            const imgParts = imagePath.split('/');
-            imagePath = `${imgParts[0]}/${tenantId}/${imgParts[imgParts.length - 1]}`;
-          }
-          
-          if (!pdfPath.includes('default.pdf')) {
-            const pdfParts = pdfPath.split('/');
-            pdfPath = `${pdfParts[0]}/${tenantId}/${pdfParts[pdfParts.length - 1]}`;
-          }
+        // Ensure paths start with a leading slash for absolute URLs
+        // This is critical to prevent the browser from appending the current path
+        if (imagePath && !imagePath.startsWith('/')) {
+          imagePath = '/' + imagePath;
+        }
+        
+        if (pdfPath && !pdfPath.startsWith('/')) {
+          pdfPath = '/' + pdfPath;
         }
         
         postHTML = postHTML.replace(/\{\{image\}\}/g, imagePath);
@@ -310,31 +319,26 @@ function renderPage(res, pageType, pageTitle, tenantId = 'default') {
 
 // Serve admin page for tenant management
 app.get('/admin', (req, res) => {
-  const adminPagePath = path.join(__dirname, 'public', 'admin.html');
+  const adminTemplatePath = path.join(__dirname, 'views', 'admin.html');
   
-  // Check if admin page exists, create it if not
-  if (!fs.existsSync(adminPagePath)) {
-    const adminTemplatePath = path.join(__dirname, 'views', 'admin.html');
-    if (fs.existsSync(adminTemplatePath)) {
-      fs.copyFileSync(adminTemplatePath, adminPagePath);
-    } else {
-      // Create a simple admin page if template doesn't exist
-      fs.writeFileSync(adminPagePath, `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Blog Admin</title>
-          <meta http-equiv="refresh" content="0;url=/">
-        </head>
-        <body>
-          <p>Redirecting to home page...</p>
-        </body>
-        </html>
-      `);
-    }
+  // Check if admin template exists
+  if (fs.existsSync(adminTemplatePath)) {
+    res.sendFile(adminTemplatePath);
+  } else {
+    // Create a simple admin response if template doesn't exist
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Blog Admin</title>
+        <meta http-equiv="refresh" content="0;url=/">
+      </head>
+      <body>
+        <p>Redirecting to home page...</p>
+      </body>
+      </html>
+    `);
   }
-  
-  res.sendFile(adminPagePath);
 });
 
 // Routes for default site (existing functionality)
@@ -661,13 +665,13 @@ app.post('/api/posts/:pageType', upload.fields([
     // Update paths if files were uploaded
     if (req.files) {
       if (req.files.image && req.files.image.length > 0) {
-        // Get the relative path for the image
+        // Get the relative path for the image (now directly in images folder)
         const filename = path.basename(req.files.image[0].path);
         imagePath = `content-efs/images/${filename}`;
       }
       
       if (req.files.pdf && req.files.pdf.length > 0) {
-        // Get the relative path for the PDF
+        // Get the relative path for the PDF (now directly in pdfs folder)
         const filename = path.basename(req.files.pdf[0].path);
         pdfPath = `content-efs/pdfs/${filename}`;
       }
@@ -982,6 +986,320 @@ app.delete('/api/:tenantId/posts/:pageType/:id', (req, res) => {
   } catch (error) {
     console.error('Error deleting tenant post:', error);
     res.status(500).json({ success: false, message: 'Failed to delete post: ' + error.message });
+  }
+});
+
+
+
+
+
+
+
+
+// Update a blog post with position handling - for the default site
+app.put('/api/posts/:pageType/:id', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'pdf', maxCount: 1 }
+]), (req, res) => {
+  try {
+    const { title, description, password, position } = req.body;
+    const pageType = req.params.pageType;
+    const postId = parseInt(req.params.id);
+    
+    // Basic validation
+    if (!title || !description || isNaN(postId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Title, description, and valid post ID are required' 
+      });
+    }
+    
+    // Validate password
+    if (password !== 'thisMind') {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid password'
+      });
+    }
+    
+    // Manual file size validation for image
+    if (req.files && req.files.image && req.files.image[0].size > 50 * 1024 * 1024) {
+      // If image is larger than 50MB, delete it and return error
+      fs.unlinkSync(req.files.image[0].path);
+      return res.status(400).json({
+        success: false,
+        message: 'Image file is too large. Maximum size is 50MB.'
+      });
+    }
+    
+    // Determine which data file to use
+    let dataFile;
+    if (pageType === 'main') {
+      dataFile = 'main-posts.json';
+    } else if (pageType === 'secondary') {
+      dataFile = 'secondary-posts.json';
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid page type' });
+    }
+    
+    const filePath = path.join(__dirname, 'public', 'data', dataFile);
+    
+    // Check if the data file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: 'No posts found for this page type' });
+    }
+    
+    // Read the current data
+    const blogData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    
+    // Find the post to update
+    const postIndex = blogData.posts.findIndex(post => post.id === postId);
+    
+    if (postIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+    
+    // Get the existing post data
+    const existingPost = blogData.posts[postIndex];
+    
+    // Set paths for files - start with existing values
+    let imagePath = existingPost.image;
+    let pdfPath = existingPost.pdf;
+    
+    // If new files were uploaded, update paths and delete old files
+    if (req.files) {
+      // Handle image update
+      if (req.files.image && req.files.image.length > 0) {
+        // Delete old image if it's not the default
+        if (existingPost.image && existingPost.image !== 'content-efs/images/default.jpeg') {
+          const oldImagePath = path.join(__dirname, 'public', existingPost.image);
+          if (fs.existsSync(oldImagePath)) {
+            try {
+              fs.unlinkSync(oldImagePath);
+              console.log(`Deleted old image: ${oldImagePath}`);
+            } catch (err) {
+              console.error(`Error deleting old image: ${err.message}`);
+            }
+          }
+        }
+        
+        // Get the relative path for the new image (now directly in images folder)
+        const filename = path.basename(req.files.image[0].path);
+        imagePath = `content-efs/images/${filename}`;
+      }
+      
+      // Handle PDF update
+      if (req.files.pdf && req.files.pdf.length > 0) {
+        // Delete old PDF if it's not the default
+        if (existingPost.pdf && existingPost.pdf !== 'content-efs/pdfs/default.pdf') {
+          const oldPdfPath = path.join(__dirname, 'public', existingPost.pdf);
+          if (fs.existsSync(oldPdfPath)) {
+            try {
+              fs.unlinkSync(oldPdfPath);
+              console.log(`Deleted old PDF: ${oldPdfPath}`);
+            } catch (err) {
+              console.error(`Error deleting old PDF: ${err.message}`);
+            }
+          }
+        }
+        
+        // Get the relative path for the new PDF (now directly in pdfs folder)
+        const filename = path.basename(req.files.pdf[0].path);
+        pdfPath = `content-efs/pdfs/${filename}`;
+      }
+    }
+    
+    // Update the post data
+    const updatedPost = {
+      ...existingPost,
+      title,
+      description,
+      image: imagePath,
+      pdf: pdfPath
+    };
+    
+    // First, remove the post from its current position
+    blogData.posts.splice(postIndex, 1);
+    
+    // Then, insert it at the new position if specified
+    const newPosition = position ? parseInt(position) : 0;
+    if (newPosition > 0) {
+      // Ensure the position is valid (not beyond the array length)
+      const insertIndex = Math.min(newPosition - 1, blogData.posts.length);
+      blogData.posts.splice(insertIndex, 0, updatedPost);
+      console.log(`Moved post to position ${insertIndex + 1}`);
+    } else {
+      // If no position specified, put it back at the original position
+      blogData.posts.splice(postIndex, 0, updatedPost);
+    }
+    
+    // Write back to the file
+    fs.writeFileSync(filePath, JSON.stringify(blogData, null, 2));
+    
+    res.json({ 
+      success: true, 
+      message: 'Post updated successfully',
+      post: updatedPost
+    });
+  } catch (error) {
+    console.error('Error updating post:', error);
+    res.status(500).json({ success: false, message: 'Failed to update post: ' + error.message });
+  }
+});
+
+// Update a blog post with position handling - for tenant-specific sites
+app.put('/api/:tenantId/posts/:pageType/:id', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'pdf', maxCount: 1 }
+]), (req, res) => {
+  try {
+    const { title, description, password, position } = req.body;
+    const pageType = req.params.pageType;
+    const postId = parseInt(req.params.id);
+    const tenantId = req.params.tenantId;
+    
+    // Basic validation
+    if (!title || !description || isNaN(postId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Title, description, and valid post ID are required' 
+      });
+    }
+    
+    // Get the tenant-specific password
+    const tenantPassword = getTenantPassword(tenantId);
+    
+    // Validate password
+    if (password !== tenantPassword) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid password'
+      });
+    }
+    
+    // Manual file size validation for image
+    if (req.files && req.files.image && req.files.image[0].size > 50 * 1024 * 1024) {
+      // If image is larger than 50MB, delete it and return error
+      fs.unlinkSync(req.files.image[0].path);
+      return res.status(400).json({
+        success: false,
+        message: 'Image file is too large. Maximum size is 50MB.'
+      });
+    }
+    
+    // Get tenant-specific data file
+    const tenantDir = path.join(tenantsDir, tenantId);
+    
+    // Determine which data file to use
+    let dataFile;
+    if (pageType === 'main') {
+      dataFile = path.join(tenantDir, 'main-posts.json');
+    } else if (pageType === 'secondary') {
+      dataFile = path.join(tenantDir, 'secondary-posts.json');
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid page type' });
+    }
+    
+    // Check if the data file exists
+    if (!fs.existsSync(dataFile)) {
+      return res.status(404).json({ success: false, message: 'No posts found for this tenant and page type' });
+    }
+    
+    // Read the current data
+    const blogData = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+    
+    // Find the post to update
+    const postIndex = blogData.posts.findIndex(post => post.id === postId);
+    
+    if (postIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+    
+    // Get the existing post data
+    const existingPost = blogData.posts[postIndex];
+    
+    // Set paths for files - start with existing values
+    let imagePath = existingPost.image;
+    let pdfPath = existingPost.pdf;
+    
+    // If new files were uploaded, update paths and delete old files
+    if (req.files) {
+      // Handle image update
+      if (req.files.image && req.files.image.length > 0) {
+        // Delete old image if it's not the default
+        if (existingPost.image && existingPost.image !== 'content-efs/images/default.jpeg') {
+          const oldImagePath = path.join(__dirname, 'public', existingPost.image);
+          if (fs.existsSync(oldImagePath)) {
+            try {
+              fs.unlinkSync(oldImagePath);
+              console.log(`Deleted old image: ${oldImagePath}`);
+            } catch (err) {
+              console.error(`Error deleting old image: ${err.message}`);
+            }
+          }
+        }
+        
+        // Get the relative path for the new image (with tenant subfolder)
+        const filename = path.basename(req.files.image[0].path);
+        imagePath = `content-efs/images/${tenantId}/${filename}`;
+      }
+      
+      // Handle PDF update
+      if (req.files.pdf && req.files.pdf.length > 0) {
+        // Delete old PDF if it's not the default
+        if (existingPost.pdf && existingPost.pdf !== 'content-efs/pdfs/default.pdf') {
+          const oldPdfPath = path.join(__dirname, 'public', existingPost.pdf);
+          if (fs.existsSync(oldPdfPath)) {
+            try {
+              fs.unlinkSync(oldPdfPath);
+              console.log(`Deleted old PDF: ${oldPdfPath}`);
+            } catch (err) {
+              console.error(`Error deleting old PDF: ${err.message}`);
+            }
+          }
+        }
+        
+        // Get the relative path for the new PDF (with tenant subfolder)
+        const filename = path.basename(req.files.pdf[0].path);
+        pdfPath = `content-efs/pdfs/${tenantId}/${filename}`;
+      }
+    }
+    
+    // Update the post data
+    const updatedPost = {
+      ...existingPost,
+      title,
+      description,
+      image: imagePath,
+      pdf: pdfPath
+    };
+    
+    // First, remove the post from its current position
+    blogData.posts.splice(postIndex, 1);
+    
+    // Then, insert it at the new position if specified
+    const newPosition = position ? parseInt(position) : 0;
+    if (newPosition > 0) {
+      // Ensure the position is valid (not beyond the array length)
+      const insertIndex = Math.min(newPosition - 1, blogData.posts.length);
+      blogData.posts.splice(insertIndex, 0, updatedPost);
+      console.log(`Moved post to position ${insertIndex + 1}`);
+    } else {
+      // If no position specified, put it back at the original position
+      blogData.posts.splice(postIndex, 0, updatedPost);
+    }
+    
+    // Write back to the file
+    fs.writeFileSync(dataFile, JSON.stringify(blogData, null, 2));
+    
+    res.json({ 
+      success: true, 
+      message: 'Post updated successfully',
+      post: updatedPost
+    });
+  } catch (error) {
+    console.error('Error updating tenant post:', error);
+    res.status(500).json({ success: false, message: 'Failed to update post: ' + error.message });
   }
 });
 

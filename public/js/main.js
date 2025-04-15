@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the delete functionality
   setupDeleteFunctionality();
   
+  // Initialize the edit functionality
+  setupEditFunctionality();
+  
   // Determine the current page type
   const path = window.location.pathname;
   if (tenantId !== 'default') {
@@ -436,6 +439,216 @@ async function updateAboutContent(event) {
     if (submitButton) {
       submitButton.disabled = false;
       submitButton.textContent = 'Update';
+    }
+  }
+  
+  return false;
+}
+
+
+
+
+
+
+// Global variables to store edit post information
+let currentPostToEdit = null;
+
+// Add event listeners for edit buttons
+function setupEditFunctionality() {
+  // Use event delegation to handle all edit buttons
+  document.addEventListener('click', function(event) {
+    // Check if the clicked element is an edit button
+    if (event.target.classList.contains('edit-btn')) {
+      // Stop event propagation to prevent the clickable-area from triggering
+      event.stopPropagation();
+      
+      // Get the post ID from the data attribute
+      const postId = parseInt(event.target.getAttribute('data-post-id'));
+      if (!isNaN(postId)) {
+        showEditPostModal(postId);
+      } else {
+        console.error('Invalid post ID:', event.target.getAttribute('data-post-id'));
+      }
+    }
+  });
+}
+
+// Show edit post modal
+async function showEditPostModal(postId) {
+  // Set current post ID
+  currentPostToEdit = postId;
+  
+  try {
+    // Construct the appropriate API endpoint based on tenant
+    let endpoint = `/api/posts/${currentPageType}`;
+    if (tenantId !== 'default') {
+      endpoint = `/api/${tenantId}/posts/${currentPageType}`;
+    }
+    
+    // Fetch the current posts data
+    const response = await fetch(endpoint);
+    const data = await response.json();
+    
+    // Find the post with the matching ID
+    const post = data.posts.find(p => p.id === postId);
+    
+    if (!post) {
+      console.error('Post not found with ID:', postId);
+      alert('Error: Post not found.');
+      return;
+    }
+    
+    // Find the current position (index + 1) of the post in the array
+    const currentPosition = data.posts.findIndex(p => p.id === postId) + 1;
+    
+    // Set form values
+    document.getElementById('editPostId').value = post.id;
+    document.getElementById('editPageType').value = currentPageType;
+    document.getElementById('editTitle').value = post.title || '';
+    document.getElementById('editDescription').value = post.description || '';
+    document.getElementById('editPosition').value = currentPosition;
+    document.getElementById('editPassword').value = '';  // Clear password field for security
+    
+    // Display current filenames
+    document.getElementById('currentImageName').textContent = 
+      post.image ? post.image.split('/').pop() : 'None';
+    document.getElementById('currentPdfName').textContent = 
+      post.pdf ? post.pdf.split('/').pop() : 'None';
+    
+    // Show the modal
+    const modal = document.getElementById('editPostModal');
+    modal.style.display = 'flex';
+    
+    // Prevent body scrolling while modal is open
+    document.body.style.overflow = 'hidden';
+  } catch (error) {
+    console.error('Error fetching post data:', error);
+    alert('An error occurred while loading post data.');
+  }
+}
+
+// Close edit post modal
+function closeEditPostModal() {
+  const modal = document.getElementById('editPostModal');
+  modal.style.display = 'none';
+  currentPostToEdit = null;
+  
+  // Restore body scrolling
+  document.body.style.overflow = '';
+  
+  // Reset form
+  document.getElementById('editPostForm').reset();
+}
+
+// Update post
+async function updatePost(event) {
+  event.preventDefault();
+  
+  if (!currentPostToEdit) {
+    alert('No post selected for editing.');
+    return false;
+  }
+  
+  const postId = document.getElementById('editPostId').value;
+  const pageType = document.getElementById('editPageType').value;
+  const title = document.getElementById('editTitle').value.trim();
+  const description = document.getElementById('editDescription').value.trim();
+  const password = document.getElementById('editPassword').value;
+  const positionInput = document.getElementById('editPosition').value;
+  const position = positionInput ? parseInt(positionInput) : 0; // 0 means don't change position
+  const imageFile = document.getElementById('editImage').files[0];
+  const pdfFile = document.getElementById('editPdf').files[0];
+  
+  if (!title || !description || !password) {
+    alert('Please fill in all required fields including password');
+    return false;
+  }
+  
+  if (position && position < 1) {
+    alert('Position must be 1 or greater');
+    return false;
+  }
+  
+  try {
+    // Create a FormData object to handle file uploads
+    const formData = new FormData();
+    formData.append('postId', postId);
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('password', password);
+    
+    // Only send position if it's provided and valid
+    if (position > 0) {
+      formData.append('position', position);
+    }
+    
+    // Append files if selected - only send files that are actually changed
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    
+    if (pdfFile) {
+      formData.append('pdf', pdfFile);
+    }
+    
+    // Show loading state or disable the button if needed
+    const submitButton = document.querySelector('#editPostForm .submit-btn');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Updating...';
+    }
+    
+    // Construct the appropriate API endpoint based on tenant
+    let endpoint = `/api/posts/${pageType}/${postId}`;
+    if (tenantId !== 'default') {
+      endpoint = `/api/${tenantId}/posts/${pageType}/${postId}`;
+    }
+    
+    // Send the FormData with files using fetch
+    const response = await fetch(endpoint, {
+      method: 'PUT', // Use PUT for updates
+      body: formData
+    });
+    
+    // Check if response status is 403 (Forbidden - incorrect password)
+    if (response.status === 403) {
+      const result = await response.json();
+      alert(result.message || 'Invalid password');
+      
+      // Reset button
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Update Post';
+      }
+      return false;
+    }
+    
+    const result = await response.json();
+    
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Update Post';
+    }
+    
+    if (result.success) {
+      // Close the modal
+      closeEditPostModal();
+      
+      // Refresh the page to show the updated post
+      window.location.reload();
+    } else {
+      console.error('Failed to update post:', result.message);
+      alert('Failed to update post: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Error updating post:', error);
+    alert('An error occurred while updating the post: ' + error.message);
+    
+    // Reset button
+    const submitButton = document.querySelector('#editPostForm .submit-btn');
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Update Post';
     }
   }
   

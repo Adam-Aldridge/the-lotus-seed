@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>the Lotus seed</title>
     <link rel="stylesheet" href="styles.css">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png">
 </head>
 <body>
     <div class="container">
@@ -14,7 +18,7 @@
                 <p>Experiences, stories and ideas</p>
             </div>
             <div class="logo-container">
-                <img src="/content-efs/images/logo-lotus4.png" alt="the Lotus seed Logo" class="logo">
+                <img src="/content-efs/images/logo-lotus.png" alt="the Lotus seed Logo" class="logo">
             </div>
         </div>
         
@@ -77,11 +81,7 @@
                     <textarea id="postDescription" required></textarea>
                     <p class="file-hint">Include a short summary of the work to be displayed under its title.</p>
                 </div>
-                <div class="form-group">
-                    <label for="postPassword">Password*</label>
-                    <input type="password" id="postPassword" required>
-                    <p class="file-hint">If you need the password, just ask a contact listed in the about page.</p>
-                </div>
+                
                 <div class="form-group">
                     <label for="postImage">Upload Image</label>
                     <input type="file" id="postImage" accept="image/*">
@@ -90,6 +90,13 @@
                     <label for="postPdf">Upload PDF</label>
                     <input type="file" id="postPdf" accept="application/pdf">
                 </div>
+
+                <div class="form-group">
+                    <label for="postPassword">Password*</label>
+                    <input type="password" id="postPassword" required>
+                    <p class="file-hint">If you need the password, just ask a contact listed in the about page.</p>
+                </div>
+
                 <div class="form-buttons">
                     <button type="button" class="cancel-btn" onclick="closeAddPostModal()">Cancel</button>
                     <button type="submit" class="submit-btn">Upload</button>
@@ -122,6 +129,61 @@
             </form>
         </div>
     </div>
+
+
+
+ <!-- Edit post modal with position field -->
+<div id="editPostModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit item</h3>
+            <button class="close-btn" onclick="closeEditPostModal()">&times;</button>
+        </div>
+        <form id="editPostForm" onsubmit="return updatePost(event)" enctype="multipart/form-data">
+            <input type="hidden" id="editPostId" value="">
+            <input type="hidden" id="editPageType" value="">
+            <div class="form-group">
+                <label for="editTitle">Title*</label>
+                <input type="text" id="editTitle" required>
+            </div>
+            <div class="form-group">
+                <label for="editDescription">Description*</label>
+                <textarea id="editDescription" required></textarea>
+                
+            </div>
+            <div class="form-group">
+                <label for="editPosition">Position </label>
+                <input type="number" id="editPosition" min="1" step="1">
+                <p class="file-hint">Decide where in the sequence the upload will be displayed, 1st, 2nd, 3rd etc...</p>
+            </div>
+    
+            <div class="form-group">
+                <label for="editImage">Upload New Image (leave empty to keep current)</label>
+                <input type="file" id="editImage" accept="image/*">
+                <div id="currentImageContainer" class="current-file-info">
+                    <span>Current image: </span><span id="currentImageName">None</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="editPdf">Upload New PDF (leave empty to keep current)</label>
+                <input type="file" id="editPdf" accept="application/pdf">
+                <div id="currentPdfContainer" class="current-file-info">
+                    <span>Current PDF: </span><span id="currentPdfName">None</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="editPassword">Password*</label>
+                <input type="password" id="editPassword" required>
+            </div>
+
+            <div class="form-buttons">
+                <button type="button" class="cancel-btn" onclick="closeEditPostModal()">Cancel</button>
+                <button type="submit" class="submit-btn">Update Post</button>
+            </div>
+        </form>
+    </div>
+</div>
 
     <script src="js/main.js"></script>
 </body>
